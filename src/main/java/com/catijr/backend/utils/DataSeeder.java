@@ -37,6 +37,7 @@ public class DataSeeder implements CommandLineRunner {
         // 1. Gerar 5 Artistas
         for (int i = 1; i <= 5; i++) {
             Artist artist = Artist.builder()
+                    .name("Artista" + i)
                     .listeners(200_000 * i)
                     .about("Biografia do Artista " + i + ". Totalmente gerada via automação de teste.")
                     .build();

@@ -21,6 +21,9 @@ public class Artist {
     @Column(name = "artist_id")
     private UUID id;
 
+    @Column(name = "artist_name")
+    private String name;
+
     @Column(name = "num_listeners")
     private int listeners;
 

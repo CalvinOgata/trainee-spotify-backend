@@ -1,5 +1,6 @@
 package com.catijr.backend.Controllers;
 
+import com.catijr.backend.DTOs.GetAlbumDTO;
 import com.catijr.backend.DTOs.GetMusicDTO;
 import com.catijr.backend.DTOs.GetPopSongsResponseDTO;
 import com.catijr.backend.Entities.Music;
@@ -27,6 +28,15 @@ public class ArtistController {
         var popMusics = artistService.getPopularMusicsByArtistId(UUID.fromString(artistId));
 
         List<GetMusicDTO> responseDTO =  popMusics.stream().limit(5).map(music -> new GetMusicDTO(music)).collect(Collectors.toList());
+
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @GetMapping("{artistId}/albums")
+    public ResponseEntity<List<GetAlbumDTO>> getAlbumsByArtistId(@PathVariable String artistId) {
+        var albums = artistService.getAlbumsByArtistId(UUID.fromString(artistId));
+
+        List<GetAlbumDTO> responseDTO = albums.stream().map(album -> new GetAlbumDTO(album)).collect(Collectors.toList());
 
         return ResponseEntity.ok(responseDTO);
     }

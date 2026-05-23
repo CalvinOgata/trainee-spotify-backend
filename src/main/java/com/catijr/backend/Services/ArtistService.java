@@ -2,6 +2,7 @@ package com.catijr.backend.Services;
 
 
 import com.catijr.backend.DTOs.GetMusicDTO;
+import com.catijr.backend.Entities.Album;
 import com.catijr.backend.Entities.Artist;
 import com.catijr.backend.Entities.Music;
 import com.catijr.backend.Repositories.ArtistRepository;
@@ -24,12 +25,18 @@ public class ArtistService {
     //private MusicRepository musicRepository;
 
     public List<Music> getPopularMusicsByArtistId(UUID artistId) {
-        var a = artistRepository.findById(artistId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var artist = artistRepository.findById(artistId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        List<Music> pop = a.getSongs();
+        List<Music> pop = artist.getSongs();
 
         pop.sort((m1, m2) -> Integer.compare(m1.getTimesListen(), m2.getTimesListen()));
 
         return pop;
+    }
+
+    public List<Album> getAlbumsByArtistId(UUID artistId) {
+        var artist = artistRepository.findById(artistId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        return artist.albums;
     }
 }
