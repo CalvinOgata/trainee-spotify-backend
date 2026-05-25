@@ -2,6 +2,8 @@ package com.catijr.backend.Controllers;
 
 
 import com.catijr.backend.DTOs.Music.GetMusicDTO;
+import com.catijr.backend.DTOs.Playlist.GetPlaylistNoMusicDTO;
+import com.catijr.backend.DTOs.Playlist.PutPlaylistDTO;
 import com.catijr.backend.Services.PlaylistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,16 @@ public class PlaylistController {
         var musics = playlistService.getMusicsByPlaylistId(UUID.fromString(playlistId));
 
         List<GetMusicDTO> responseDTO = musics.stream().map(music -> new GetMusicDTO(music)).toList();
+
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @PutMapping("{playlistId}/attributes")
+    public ResponseEntity<GetPlaylistNoMusicDTO> editPlaylistAttributes(@PathVariable String playlistId,
+                                                                        @RequestBody PutPlaylistDTO changesDTO) {
+        var edited_playlist = playlistService.editPlaylistAttributes(UUID.fromString(playlistId), changesDTO);
+
+        GetPlaylistNoMusicDTO responseDTO = new GetPlaylistNoMusicDTO(edited_playlist);
 
         return ResponseEntity.ok(responseDTO);
     }

@@ -1,7 +1,9 @@
 package com.catijr.backend.Services;
 
 
+import com.catijr.backend.DTOs.Playlist.PutPlaylistDTO;
 import com.catijr.backend.Entities.Music;
+import com.catijr.backend.Entities.Playlist;
 import com.catijr.backend.Repositories.PlaylistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,23 @@ public class PlaylistService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         return playlist.getSongs();
+    }
+
+    public Playlist editPlaylistAttributes(UUID playlistId, PutPlaylistDTO changesDTO) {
+        var playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (changesDTO.name() != null) {
+            playlist.setName(changesDTO.name());
+        }
+
+        if (changesDTO.description() != null) {
+            playlist.setDescription(changesDTO.description());
+        }
+
+        var edited = playlistRepository.save(playlist);
+
+        return edited;
     }
 
 
