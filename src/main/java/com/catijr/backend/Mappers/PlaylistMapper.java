@@ -5,11 +5,15 @@ import com.catijr.backend.DTOs.Playlist.CreatePlaylistDTO;
 import com.catijr.backend.DTOs.Playlist.GetPlaylistDTO;
 import com.catijr.backend.Entities.Playlist;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = MusicMapper.class)
 public interface PlaylistMapper {
 
     GetPlaylistNoMusicDTO toDTO(Playlist playlist);
+
+    @Mapping(target = "musics", source = "songs")
+    GetPlaylistDTO toFullDTO(Playlist playlist);
 
     Playlist toEntity(CreatePlaylistDTO playlist);
 }

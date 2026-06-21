@@ -2,6 +2,8 @@ package com.catijr.backend.Controllers;
 
 import com.catijr.backend.DTOs.Album.GetAlbumDTO;
 import com.catijr.backend.DTOs.Music.GetMusicDTO;
+import com.catijr.backend.Mappers.AlbumMapper;
+import com.catijr.backend.Mappers.MusicMapper;
 import com.catijr.backend.Services.ArtistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,26 +17,28 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/artist/")
+@RequestMapping("/artist")
 @RequiredArgsConstructor
 public class ArtistController {
 
     private final ArtistService artistService;
+    private final MusicMapper musicMapper;
+    private final AlbumMapper albumMapper;
 
-    @GetMapping("{artistId}/popularMusics")
+    @GetMapping("/{artistId}/popularMusics")
     public ResponseEntity<List<GetMusicDTO>> getPopularMusicsByArtistId(@PathVariable String artistId) {
         var popMusics = artistService.getPopularMusicsByArtistId(UUID.fromString(artistId));
 
-        List<GetMusicDTO> responseDTO =  popMusics.stream().limit(5).map(music -> new GetMusicDTO(music)).collect(Collectors.toList());
+        List<GetMusicDTO> responseDTO = popMusics.stream().limit(5).map(musicMapper::toDTO).collect(Collectors.toList());
 
         return ResponseEntity.ok(responseDTO);
     }
 
-    @GetMapping("{artistId}/albums")
+    @GetMapping("/{artistId}/albums")
     public ResponseEntity<List<GetAlbumDTO>> getAlbumsByArtistId(@PathVariable String artistId) {
         var albums = artistService.getAlbumsByArtistId(UUID.fromString(artistId));
 
-        List<GetAlbumDTO> responseDTO = albums.stream().map(album -> new GetAlbumDTO(album)).collect(Collectors.toList());
+        List<GetAlbumDTO> responseDTO = albums.stream().map(albumMapper::toDTO).collect(Collectors.toList());
 
         return ResponseEntity.ok(responseDTO);
     }
