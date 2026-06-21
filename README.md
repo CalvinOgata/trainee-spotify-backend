@@ -45,7 +45,7 @@ Rotas focadas na consulta de informações sobre os álbuns musicais.
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| GET | /album/{albumId} | Retorna todos os dados de um álbum específico a partir do seu Id. |
+| GET | /album/{albumId}/musics | Retorna a lista de músicas de um álbum específico a partir do seu Id. |
 
 ---
 
