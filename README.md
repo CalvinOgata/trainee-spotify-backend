@@ -49,5 +49,14 @@ Rotas focadas na consulta de informações sobre os álbuns musicais.
 
 ---
 
+## Busca (/search)
+Rota de busca incremental usada pela página de resultados do frontend (chamada a cada tecla, com *debounce* no cliente). A busca é *case* e acento-insensível e retorna quatro listas: `musics`, `playlists`, `artists` e `albums` (sempre arrays — nunca `null`).
+
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| GET | /search?q={query}&limit={limit} | Busca músicas (por título), playlists (por nome ou descrição), artistas (por nome) e álbuns (por título) que contenham o termo. `q` é obrigatório; `limit` é opcional (padrão 20, máximo 50 por categoria). |
+
+---
+
 ## Música
 *Esta entidade não possui rotas próprias de gerenciamento direto na API. O acesso às músicas é feito através das rotas de Playlists, Álbuns ou Usuário.*
