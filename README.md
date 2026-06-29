@@ -25,6 +25,7 @@ Rotas destinadas à criação, atualização, exclusão e visualização de play
 | POST | /playlist | Cria uma nova playlist. Espera um JSON estruturado no corpo da requisição. |
 | PUT | /playlist/{playlistId}/attributes | Atualiza os atributos de texto/metadados da playlist (exceto a lista de músicas). |
 | PATCH | /playlist/{playlistId}/{musicId} | Insere uma música específica (`musicId`) na playlist (`playlistId`). |
+| PUT | /playlist/{playlistId}/order | Reordena as músicas da playlist (usado pelo *drag-and-drop* do frontend). Espera no corpo `{ "musicIds": [...] }` com a ordem completa e final das músicas — o mesmo conjunto já presente na playlist (apenas reordenação, sem inserir/remover). A operação é idempotente. |
 | DELETE | /playlist/{playlistId}/{musicId} | Remove uma música específica (`musicId`) da playlist (`playlistId`). |
 | DELETE | /playlist/{playlistId} | Exclui a playlist inteira do banco de dados. |
 
