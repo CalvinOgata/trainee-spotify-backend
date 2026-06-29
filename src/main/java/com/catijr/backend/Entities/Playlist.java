@@ -51,5 +51,9 @@ public class Playlist {
 
     @ManyToMany
     @JoinTable(name = "tb_playlist_music", joinColumns = @JoinColumn(name = "playlist"), inverseJoinColumns = @JoinColumn(name = "songs"))
+    // @OrderColumn faz o Hibernate persistir a ORDEM da lista na coluna song_position
+    // da tabela de junção. Assim GET /playlist/{id} devolve as músicas ordenadas e
+    // add/remove/reorder mantêm a ordem de forma consistente (gerenciada pelo ORM).
+    @OrderColumn(name = "song_position")
     private List<Music> songs;
 }
