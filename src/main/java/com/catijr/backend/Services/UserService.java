@@ -2,6 +2,7 @@ package com.catijr.backend.Services;
 
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.catijr.backend.DTOs.Album.GetAlbumNoMusicsDTO;
@@ -39,9 +40,14 @@ public class UserService {
 
 
     public List<GetPlaylistNoMusicDTO> getUserPlaylists(){
-        List<Playlist> albums = playlistRepository.findAll();
-        
-        return albums.stream().map(playlistMapper::toDTO).toList();
+        // Ordem estável entre mutações: createdAt ASC (playlists antigas ficam no
+        // topo, novas entram no fim). NÃO ordenar por updatedAt — reordenar faixas
+        // bumpa updatedAt e jogaria a playlist recém-editada pro fim da sidebar.
+        // Desempate por id garante ordem total mesmo se dois createdAt coincidirem.
+        List<Playlist> playlists = playlistRepository.findAll(
+                Sort.by(Sort.Order.asc("createdAt"), Sort.Order.asc("id")));
+
+        return playlists.stream().map(playlistMapper::toDTO).toList();
     }
 
     public List<GetArtistDTO> getUserRecentArtists(){
