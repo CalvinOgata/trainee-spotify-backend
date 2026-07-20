@@ -39,6 +39,12 @@ public class Playlist {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    // Caminho RELATIVO da capa (ex.: "/images/playlists/<id>.jpg"), servido
+    // estaticamente em /images/**. NULL quando não há capa — o frontend usa sua
+    // arte padrão nesse caso. NUNCA uma URL absoluta (o front prefixa a base).
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @PrePersist
     public void onPrePersist() {
         this.createdAt = Instant.now();

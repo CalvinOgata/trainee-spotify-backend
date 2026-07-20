@@ -27,7 +27,11 @@ public class Artist {
     @Column(name = "num_listeners")
     private int listeners;
 
-    //Foto
+    // Caminho RELATIVO da foto de perfil do artista (ex.:
+    // "/images/artists/<id>.jpg"), servido estaticamente em /images/**. NULL
+    // quando não há foto — o frontend usa sua arte padrão. Nunca URL absoluta.
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @Column(name = "about")
     private String about;
