@@ -16,6 +16,9 @@ public interface MusicMapper {
     @Mapping(target = "artistId", source = "artist.id")
     @Mapping(target = "albumId", source = "album.id")
     @Mapping(target = "playlistsId", source = "playlists")
+    // Não guardamos capa por faixa: a música herda a capa do álbum. O MapStruct
+    // gera navegação null-safe, então música sem álbum (ou álbum sem capa) -> null.
+    @Mapping(target = "imageUrl", source = "album.imageUrl")
     GetMusicDTO toDTO(Music music);
 
     default UUID playlistToId(Playlist playlist) {

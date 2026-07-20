@@ -15,5 +15,7 @@ public interface PlaylistMapper {
     @Mapping(target = "musics", source = "songs")
     GetPlaylistDTO toFullDTO(Playlist playlist);
 
+    // Playlist recém-criada nasce sem capa (image_url NULL); o front usa sua arte padrão.
+    @Mapping(target = "imageUrl", ignore = true)
     Playlist toEntity(CreatePlaylistDTO playlist);
 }
