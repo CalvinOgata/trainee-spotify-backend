@@ -10,5 +10,7 @@ public record GetAlbumDTO(UUID id, String title,
                           String year, UUID artistId,
                           String artistName,
                           List<GetMusicDTO> musics,
-                          Instant createdAt, Instant updatedAt) {
+                          Instant createdAt, Instant updatedAt,
+                          // Caminho relativo da capa (ex.: "/images/albums/<id>.jpg") ou null.
+                          String imageUrl) {
 }
