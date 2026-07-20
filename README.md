@@ -59,5 +59,16 @@ Rota de busca incremental usada pela página de resultados do frontend (chamada 
 
 ---
 
+## Imagens (/images)
+Capas de álbuns/playlists e fotos de artistas são servidas como **arquivos estáticos** — os bytes **nunca** vêm embutidos no JSON. Cada entidade (Artista, Álbum, Playlist e Música) inclui no seu JSON o campo `imageUrl`: uma **string com caminho relativo** (ex.: `/images/albums/<id>.jpg`) ou `null` quando não há capa. Nunca uma URL absoluta — o frontend prefixa sua própria base (`VITE_API_BASE`) e o browser faz um segundo GET direto no caminho para baixar a imagem.
+
+*Música não guarda capa própria: herda a capa do seu álbum (ou `null` se o álbum não tiver capa / a faixa não tiver álbum).* Os bytes ficam em disco sob `app.images.dir` (padrão `./storage/images`), espelhando o caminho da URL.
+
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| GET | /images/{caminho} | Retorna os bytes da imagem apontada por um `imageUrl` (ex.: `/images/albums/<id>.jpg`). `Content-Type` é inferido pela extensão (image/jpeg, image/png, image/webp); `Cache-Control: max-age=3600, public`. Retorna 404 se o arquivo não existir. |
+
+---
+
 ## Música
 *Esta entidade não possui rotas próprias de gerenciamento direto na API. O acesso às músicas é feito através das rotas de Playlists, Álbuns ou Usuário.*
