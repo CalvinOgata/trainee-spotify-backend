@@ -1,0 +1,6 @@
+# Image bytes served at /images/** (see ImageResourceConfig). Bytes are not versioned.
+*
+!.gitignore
+!albums/
+!artists/
+!playlists/
