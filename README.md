@@ -14,6 +14,21 @@ Rotas responsáveis por buscar o histórico e os dados associados ao perfil do u
 | GET | /user/recentAlbums | Retorna os álbuns ouvidos recentemente. |
 | GET | /user/followers | Retorna a lista de todos os seguidores do usuário. |
 
+### Biblioteca (músicas salvas, álbuns salvos e artistas seguidos)
+Coleções persistentes do usuário (implícito — o app tem um único usuário, sem coluna de usuário). Cada coleção tem um `GET` (itens ordenados por adição, **mais recente primeiro**) e um par `POST`/`DELETE` por id. As mutações são **idempotentes**: retornam `204 No Content` tanto se a linha já existia quanto se já estava ausente. O `404` só ocorre quando a própria música/álbum/artista referenciada **não existe** no catálogo. *(Playlists já são cobertas por `/user/playlists` — não entram aqui.)*
+
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| GET | /user/savedMusics | Retorna as músicas salvas (`Music[]`), da mais recente para a mais antiga. |
+| POST | /user/savedMusics/{musicId} | Salva a música na biblioteca. `204`; `404` se a música não existir. |
+| DELETE | /user/savedMusics/{musicId} | Remove a música da biblioteca. `204`; `404` se a música não existir. |
+| GET | /user/savedAlbums | Retorna os álbuns salvos (`AlbumSummary[]`), do mais recente para o mais antigo. |
+| POST | /user/savedAlbums/{albumId} | Salva o álbum na biblioteca. `204`; `404` se o álbum não existir. |
+| DELETE | /user/savedAlbums/{albumId} | Remove o álbum da biblioteca. `204`; `404` se o álbum não existir. |
+| GET | /user/followedArtists | Retorna os artistas seguidos (`Artist[]`), do seguido mais recentemente ao mais antigo. |
+| POST | /user/followedArtists/{artistId} | Segue o artista. `204`; `404` se o artista não existir. |
+| DELETE | /user/followedArtists/{artistId} | Deixa de seguir o artista. `204`; `404` se o artista não existir. |
+
 ---
 
 ## Playlist (/playlist)
