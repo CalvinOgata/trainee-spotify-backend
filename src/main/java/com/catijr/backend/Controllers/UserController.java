@@ -14,9 +14,13 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 
 
 @RestController
@@ -120,11 +124,65 @@ public class UserController {
 
         return ResponseEntity.ok(followers);
     }
-    
-    
-    
-    
-    
 
-    
+    /*
+    BIBLIOTECA — músicas salvas, álbuns salvos e artistas seguidos.
+
+    Cada coleção tem um GET (itens ordenados por adição, mais recente primeiro)
+    e um par POST/DELETE idempotente por id: ambos retornam 204 independentemente
+    de a linha já existir/estar ausente. O 404 só ocorre quando a própria
+    música/álbum/artista referenciada não existe no catálogo.
+    */
+
+    @GetMapping("/savedMusics")
+    public ResponseEntity<List<GetMusicDTO>> getSavedMusics() {
+        return ResponseEntity.ok(userService.getSavedMusics());
+    }
+
+    @PostMapping("/savedMusics/{musicId}")
+    public ResponseEntity<Void> saveMusic(@PathVariable String musicId) {
+        userService.saveMusic(UUID.fromString(musicId));
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/savedMusics/{musicId}")
+    public ResponseEntity<Void> unsaveMusic(@PathVariable String musicId) {
+        userService.unsaveMusic(UUID.fromString(musicId));
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/savedAlbums")
+    public ResponseEntity<List<GetAlbumNoMusicsDTO>> getSavedAlbums() {
+        return ResponseEntity.ok(userService.getSavedAlbums());
+    }
+
+    @PostMapping("/savedAlbums/{albumId}")
+    public ResponseEntity<Void> saveAlbum(@PathVariable String albumId) {
+        userService.saveAlbum(UUID.fromString(albumId));
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/savedAlbums/{albumId}")
+    public ResponseEntity<Void> unsaveAlbum(@PathVariable String albumId) {
+        userService.unsaveAlbum(UUID.fromString(albumId));
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/followedArtists")
+    public ResponseEntity<List<GetArtistDTO>> getFollowedArtists() {
+        return ResponseEntity.ok(userService.getFollowedArtists());
+    }
+
+    @PostMapping("/followedArtists/{artistId}")
+    public ResponseEntity<Void> followArtist(@PathVariable String artistId) {
+        userService.followArtist(UUID.fromString(artistId));
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/followedArtists/{artistId}")
+    public ResponseEntity<Void> unfollowArtist(@PathVariable String artistId) {
+        userService.unfollowArtist(UUID.fromString(artistId));
+        return ResponseEntity.noContent().build();
+    }
+
 }
