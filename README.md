@@ -79,6 +79,8 @@ Capas de álbuns/playlists e fotos de artistas são servidas como **arquivos est
 
 *Música não guarda capa própria: herda a capa do seu álbum (ou `null` se o álbum não tiver capa / a faixa não tiver álbum).* Os bytes ficam em disco sob `app.images.dir` (padrão `./storage/images`), espelhando o caminho da URL.
 
+**Como o `imageUrl` é preenchido (álbuns e artistas):** um valor explícito na coluna `image_url` sempre vence (permite override manual). Se estiver vazio, o backend deriva o caminho por convenção a partir do id — procura em disco `<app.images.dir>/albums/<id>.jpg` (e depois `.png`) para álbuns, e `.../artists/<id>.jpg`/`.png` para artistas. Se o arquivo existir, `imageUrl` vira o caminho relativo correspondente (`/images/albums/<id>.jpg`); senão, `null`. Como o caminho só é devolvido quando o arquivo **realmente existe**, o `imageUrl` nunca aponta pra uma capa inexistente. Na prática, para dar capa a um álbum/artista basta soltar `<id>.jpg` (ou `<id>.png`) em `storage/images/albums/` ou `storage/images/artists/` — **sem tocar no banco**. (Música herda a capa derivada do seu álbum.)
+
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
 | GET | /images/{caminho} | Retorna os bytes da imagem apontada por um `imageUrl` (ex.: `/images/albums/<id>.jpg`). `Content-Type` é inferido pela extensão (image/jpeg, image/png, image/webp); `Cache-Control: max-age=3600, public`. Retorna 404 se o arquivo não existir. |
