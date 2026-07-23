@@ -1,8 +1,10 @@
 package com.catijr.backend.Controllers;
 
 import com.catijr.backend.DTOs.Album.GetAlbumDTO;
+import com.catijr.backend.DTOs.Artist.GetArtistDTO;
 import com.catijr.backend.DTOs.Music.GetMusicDTO;
 import com.catijr.backend.Mappers.AlbumMapper;
+import com.catijr.backend.Mappers.ArtistMapper;
 import com.catijr.backend.Mappers.MusicMapper;
 import com.catijr.backend.Services.ArtistService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,17 @@ public class ArtistController {
     private final ArtistService artistService;
     private final MusicMapper musicMapper;
     private final AlbumMapper albumMapper;
+    private final ArtistMapper artistMapper;
+
+    // Mesmo shape/mapper de /user/followedArtists (artistMapper.toDTO) — JSON idêntico
+    // para o mesmo id. 404 (ResponseStatusException) quando o artista não existe,
+    // igual aos demais endpoints de /artist e /user.
+    @GetMapping("/{artistId}")
+    public ResponseEntity<GetArtistDTO> getArtistById(@PathVariable String artistId) {
+        var artist = artistService.getArtistById(UUID.fromString(artistId));
+
+        return ResponseEntity.ok(artistMapper.toDTO(artist));
+    }
 
     @GetMapping("/{artistId}/popularMusics")
     public ResponseEntity<List<GetMusicDTO>> getPopularMusicsByArtistId(@PathVariable String artistId) {
