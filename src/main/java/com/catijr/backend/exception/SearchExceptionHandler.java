@@ -22,22 +22,16 @@ import java.util.Map;
 @RestControllerAdvice(assignableTypes = SearchController.class)
 public class SearchExceptionHandler {
 
-    private static ResponseEntity<Map<String, String>> body(HttpStatus status, String error) {
-        return ResponseEntity.status(status)
-                .cacheControl(CacheControl.noStore())
-                .body(Map.of("error", error));
-    }
-
     /** q ausente/vazio/muito longo — 400 com mensagem fixa ("q is required" / "q is too long"). */
     @ExceptionHandler(InvalidSearchQueryException.class)
     public ResponseEntity<Map<String, String>> handleInvalid(InvalidSearchQueryException ex) {
-        return body(HttpStatus.BAD_REQUEST, ex.getMessage());
+        return ErrorResponses.body(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     /** limit não-numérico, etc. — 400 sem ecoar o valor recebido. */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, String>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        return body(HttpStatus.BAD_REQUEST, "invalid request");
+        return ErrorResponses.body(HttpStatus.BAD_REQUEST, "invalid request");
     }
 
     /** Limite de requisições excedido — 429 com Retry-After. */
@@ -52,6 +46,6 @@ public class SearchExceptionHandler {
     /** Qualquer falha de banco — 500 com corpo fixo (já logado no serviço). */
     @ExceptionHandler(SearchFailedException.class)
     public ResponseEntity<Map<String, String>> handleFailed(SearchFailedException ex) {
-        return body(HttpStatus.INTERNAL_SERVER_ERROR, "search failed");
+        return ErrorResponses.body(HttpStatus.INTERNAL_SERVER_ERROR, "search failed");
     }
 }
