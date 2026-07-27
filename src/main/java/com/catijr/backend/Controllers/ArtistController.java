@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/artist")
@@ -42,7 +41,7 @@ public class ArtistController {
     public ResponseEntity<List<GetMusicDTO>> getPopularMusicsByArtistId(@PathVariable String artistId) {
         var popMusics = artistService.getPopularMusicsByArtistId(UUID.fromString(artistId));
 
-        List<GetMusicDTO> responseDTO = popMusics.stream().limit(5).map(musicMapper::toDTO).collect(Collectors.toList());
+        List<GetMusicDTO> responseDTO = popMusics.stream().limit(5).map(musicMapper::toDTO).toList();
 
         return ResponseEntity.ok(responseDTO);
     }
@@ -51,7 +50,7 @@ public class ArtistController {
     public ResponseEntity<List<GetAlbumDTO>> getAlbumsByArtistId(@PathVariable String artistId) {
         var albums = artistService.getAlbumsByArtistId(UUID.fromString(artistId));
 
-        List<GetAlbumDTO> responseDTO = albums.stream().map(albumMapper::toDTO).collect(Collectors.toList());
+        List<GetAlbumDTO> responseDTO = albums.stream().map(albumMapper::toDTO).toList();
 
         return ResponseEntity.ok(responseDTO);
     }
