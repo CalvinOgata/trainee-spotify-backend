@@ -12,6 +12,7 @@ import com.catijr.backend.Entities.Music;
 import com.catijr.backend.Entities.Playlist;
 import com.catijr.backend.Mappers.PlaylistMapper;
 import com.catijr.backend.Repositories.PlaylistRepository;
+import com.catijr.backend.utils.EntityLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,15 +31,13 @@ public class PlaylistService {
     private final PlaylistMapper playlistMapper;
 
     public Playlist getPlaylistById(UUID playlistId) {
-        var playlist = playlistRepository.findById(playlistId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var playlist = EntityLookup.getOr404(playlistRepository, playlistId);
 
         return playlist;
     }
 
     public Playlist editPlaylistAttributes(UUID playlistId, PutPlaylistDTO changesDTO) {
-        var playlist = playlistRepository.findById(playlistId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var playlist = EntityLookup.getOr404(playlistRepository, playlistId);
 
         if (changesDTO.name() != null) {
             playlist.setName(changesDTO.name());
@@ -54,12 +53,10 @@ public class PlaylistService {
     }
 
     public Playlist addMusicToPlaylist(UUID playlistId, UUID musicId) {
-        var playlist = playlistRepository.findById(playlistId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var playlist = EntityLookup.getOr404(playlistRepository, playlistId);
 
         if (!playlistRepository.musicExistsById(playlistId, musicId)) {
-            var music = musicRepository.findById(musicId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            var music = EntityLookup.getOr404(musicRepository, musicId);
 
             List<Music> musics = new ArrayList<>(playlist.getSongs());
 
@@ -86,20 +83,15 @@ public class PlaylistService {
 
 
     public void deletePlaylistById(UUID playlistId) {
-        if (playlistRepository.existsById(playlistId)) {
-            playlistRepository.deleteById(playlistId);
-        } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        EntityLookup.existsOr404(playlistRepository, playlistId);
+        playlistRepository.deleteById(playlistId);
     }
 
     public void deleteMusicById(UUID playlistId, UUID musicId) {
-        var playlist = playlistRepository.findById(playlistId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var playlist = EntityLookup.getOr404(playlistRepository, playlistId);
 
         if (playlistRepository.musicExistsById(playlistId, musicId)) {
-            var music = musicRepository.findById(musicId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            var music = EntityLookup.getOr404(musicRepository, musicId);
             List<Music> musics = new ArrayList<>(playlist.getSongs());
 
             musics.removeIf(tgt_music -> tgt_music.getId().equals(musicId));

@@ -5,10 +5,9 @@ import com.catijr.backend.Entities.Album;
 import com.catijr.backend.Entities.Artist;
 import com.catijr.backend.Entities.Music;
 import com.catijr.backend.Repositories.ArtistRepository;
+import com.catijr.backend.utils.EntityLookup;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,12 +20,11 @@ public class ArtistService {
     //private MusicRepository musicRepository;
 
     public Artist getArtistById(UUID artistId) {
-        return artistRepository.findById(artistId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return EntityLookup.getOr404(artistRepository, artistId);
     }
 
     public List<Music> getPopularMusicsByArtistId(UUID artistId) {
-        var artist = artistRepository.findById(artistId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var artist = EntityLookup.getOr404(artistRepository, artistId);
 
         List<Music> pop = artist.getSongs();
 
@@ -37,7 +35,7 @@ public class ArtistService {
     }
 
     public List<Album> getAlbumsByArtistId(UUID artistId) {
-        var artist = artistRepository.findById(artistId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var artist = EntityLookup.getOr404(artistRepository, artistId);
 
         return artist.albums;
     }

@@ -5,10 +5,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.catijr.backend.DTOs.Album.GetAlbumNoMusicsDTO;
 import com.catijr.backend.DTOs.Artist.GetArtistDTO;
@@ -32,6 +30,7 @@ import com.catijr.backend.Mappers.AlbumMapper;
 import com.catijr.backend.Mappers.ArtistMapper;
 import com.catijr.backend.Mappers.MusicMapper;
 import com.catijr.backend.Mappers.PlaylistMapper;
+import com.catijr.backend.utils.EntityLookup;
 
 import lombok.RequiredArgsConstructor;
 
@@ -118,8 +117,7 @@ public class UserService {
 
     @Transactional
     public void saveMusic(UUID musicId){
-        Music music = musicRepository.findById(musicId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Music music = EntityLookup.getOr404(musicRepository, musicId);
         if (!savedMusicRepository.existsById(musicId)) {
             savedMusicRepository.save(
                     SavedMusic.builder().music(music).addedAt(Instant.now()).build());
@@ -128,9 +126,7 @@ public class UserService {
 
     @Transactional
     public void unsaveMusic(UUID musicId){
-        if (!musicRepository.existsById(musicId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        EntityLookup.existsOr404(musicRepository, musicId);
         if (savedMusicRepository.existsById(musicId)) {
             savedMusicRepository.deleteById(musicId);
         }
@@ -145,8 +141,7 @@ public class UserService {
 
     @Transactional
     public void saveAlbum(UUID albumId){
-        Album album = albumRepository.findById(albumId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Album album = EntityLookup.getOr404(albumRepository, albumId);
         if (!savedAlbumRepository.existsById(albumId)) {
             savedAlbumRepository.save(
                     SavedAlbum.builder().album(album).addedAt(Instant.now()).build());
@@ -155,9 +150,7 @@ public class UserService {
 
     @Transactional
     public void unsaveAlbum(UUID albumId){
-        if (!albumRepository.existsById(albumId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        EntityLookup.existsOr404(albumRepository, albumId);
         if (savedAlbumRepository.existsById(albumId)) {
             savedAlbumRepository.deleteById(albumId);
         }
@@ -172,8 +165,7 @@ public class UserService {
 
     @Transactional
     public void followArtist(UUID artistId){
-        Artist artist = artistRepository.findById(artistId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Artist artist = EntityLookup.getOr404(artistRepository, artistId);
         if (!followedArtistRepository.existsById(artistId)) {
             followedArtistRepository.save(
                     FollowedArtist.builder().artist(artist).addedAt(Instant.now()).build());
@@ -182,9 +174,7 @@ public class UserService {
 
     @Transactional
     public void unfollowArtist(UUID artistId){
-        if (!artistRepository.existsById(artistId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        EntityLookup.existsOr404(artistRepository, artistId);
         if (followedArtistRepository.existsById(artistId)) {
             followedArtistRepository.deleteById(artistId);
         }
