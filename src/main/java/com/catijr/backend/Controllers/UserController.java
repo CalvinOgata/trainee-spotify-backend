@@ -140,14 +140,14 @@ public class UserController {
     }
 
     @PostMapping("/savedMusics/{musicId}")
-    public ResponseEntity<Void> saveMusic(@PathVariable String musicId) {
-        userService.saveMusic(UUID.fromString(musicId));
+    public ResponseEntity<Void> saveMusic(@PathVariable UUID musicId) {
+        userService.saveMusic(musicId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/savedMusics/{musicId}")
-    public ResponseEntity<Void> unsaveMusic(@PathVariable String musicId) {
-        userService.unsaveMusic(UUID.fromString(musicId));
+    public ResponseEntity<Void> unsaveMusic(@PathVariable UUID musicId) {
+        userService.unsaveMusic(musicId);
         return ResponseEntity.noContent().build();
     }
 
@@ -157,14 +157,14 @@ public class UserController {
     }
 
     @PostMapping("/savedAlbums/{albumId}")
-    public ResponseEntity<Void> saveAlbum(@PathVariable String albumId) {
-        userService.saveAlbum(UUID.fromString(albumId));
+    public ResponseEntity<Void> saveAlbum(@PathVariable UUID albumId) {
+        userService.saveAlbum(albumId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/savedAlbums/{albumId}")
-    public ResponseEntity<Void> unsaveAlbum(@PathVariable String albumId) {
-        userService.unsaveAlbum(UUID.fromString(albumId));
+    public ResponseEntity<Void> unsaveAlbum(@PathVariable UUID albumId) {
+        userService.unsaveAlbum(albumId);
         return ResponseEntity.noContent().build();
     }
 
@@ -174,14 +174,14 @@ public class UserController {
     }
 
     @PostMapping("/followedArtists/{artistId}")
-    public ResponseEntity<Void> followArtist(@PathVariable String artistId) {
-        userService.followArtist(UUID.fromString(artistId));
+    public ResponseEntity<Void> followArtist(@PathVariable UUID artistId) {
+        userService.followArtist(artistId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/followedArtists/{artistId}")
-    public ResponseEntity<Void> unfollowArtist(@PathVariable String artistId) {
-        userService.unfollowArtist(UUID.fromString(artistId));
+    public ResponseEntity<Void> unfollowArtist(@PathVariable UUID artistId) {
+        userService.unfollowArtist(artistId);
         return ResponseEntity.noContent().build();
     }
 

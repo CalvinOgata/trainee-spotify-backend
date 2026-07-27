@@ -22,8 +22,8 @@ public class AlbumController {
     private final MusicMapper musicMapper;
 
     @GetMapping("/{albumId}/musics")
-    public ResponseEntity<List<GetMusicDTO>> getMusicsByAlbumId(@PathVariable String albumId) {
-        var musics = albumService.getMusicsByAlbumId(UUID.fromString(albumId));
+    public ResponseEntity<List<GetMusicDTO>> getMusicsByAlbumId(@PathVariable UUID albumId) {
+        var musics = albumService.getMusicsByAlbumId(albumId);
 
         List<GetMusicDTO> responseDTO = musics.stream().map(musicMapper::toDTO).toList();
 

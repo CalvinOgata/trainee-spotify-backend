@@ -23,8 +23,8 @@ public class PlaylistController {
     private final PlaylistMapper playlistMapper;
 
     @GetMapping("/{playlistId}")
-    public ResponseEntity<GetPlaylistDTO> getPlaylistById(@PathVariable String playlistId) {
-        var playlist = playlistService.getPlaylistById(UUID.fromString(playlistId));
+    public ResponseEntity<GetPlaylistDTO> getPlaylistById(@PathVariable UUID playlistId) {
+        var playlist = playlistService.getPlaylistById(playlistId);
 
         GetPlaylistDTO responseDTO = playlistMapper.toFullDTO(playlist);
 
@@ -32,9 +32,9 @@ public class PlaylistController {
     }
 
     @PutMapping("/{playlistId}/attributes")
-    public ResponseEntity<GetPlaylistNoMusicDTO> editPlaylistAttributes(@PathVariable String playlistId,
+    public ResponseEntity<GetPlaylistNoMusicDTO> editPlaylistAttributes(@PathVariable UUID playlistId,
                                                                         @RequestBody PutPlaylistDTO changesDTO) {
-        var edited_playlist = playlistService.editPlaylistAttributes(UUID.fromString(playlistId), changesDTO);
+        var edited_playlist = playlistService.editPlaylistAttributes(playlistId, changesDTO);
 
         GetPlaylistNoMusicDTO responseDTO = playlistMapper.toDTO(edited_playlist);
 
@@ -42,9 +42,9 @@ public class PlaylistController {
     }
 
     @PatchMapping("/{playlistId}/{musicId}")
-    public ResponseEntity<GetPlaylistDTO> addMusicToPlaylist(@PathVariable String playlistId,
-                                                             @PathVariable String musicId) {
-        var playlist = playlistService.addMusicToPlaylist(UUID.fromString(playlistId), UUID.fromString(musicId));
+    public ResponseEntity<GetPlaylistDTO> addMusicToPlaylist(@PathVariable UUID playlistId,
+                                                             @PathVariable UUID musicId) {
+        var playlist = playlistService.addMusicToPlaylist(playlistId, musicId);
 
         GetPlaylistDTO responseDTO = playlistMapper.toFullDTO(playlist);
 
@@ -58,16 +58,16 @@ public class PlaylistController {
 
 
     @DeleteMapping("/{playlistId}")
-    public ResponseEntity<Void> deletePlaylistById(@PathVariable String playlistId) {
-        playlistService.deletePlaylistById(UUID.fromString(playlistId));
+    public ResponseEntity<Void> deletePlaylistById(@PathVariable UUID playlistId) {
+        playlistService.deletePlaylistById(playlistId);
 
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{playlistId}/{musicId}")
-    public ResponseEntity<Void> deleteMusicById(@PathVariable String playlistId,
-                                                @PathVariable String musicId) {
-        playlistService.deleteMusicById(UUID.fromString(playlistId), UUID.fromString(musicId));
+    public ResponseEntity<Void> deleteMusicById(@PathVariable UUID playlistId,
+                                                @PathVariable UUID musicId) {
+        playlistService.deleteMusicById(playlistId, musicId);
 
         return ResponseEntity.ok().build();
     }

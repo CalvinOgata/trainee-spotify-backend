@@ -31,15 +31,15 @@ public class ArtistController {
     // para o mesmo id. 404 (ResponseStatusException) quando o artista não existe,
     // igual aos demais endpoints de /artist e /user.
     @GetMapping("/{artistId}")
-    public ResponseEntity<GetArtistDTO> getArtistById(@PathVariable String artistId) {
-        var artist = artistService.getArtistById(UUID.fromString(artistId));
+    public ResponseEntity<GetArtistDTO> getArtistById(@PathVariable UUID artistId) {
+        var artist = artistService.getArtistById(artistId);
 
         return ResponseEntity.ok(artistMapper.toDTO(artist));
     }
 
     @GetMapping("/{artistId}/popularMusics")
-    public ResponseEntity<List<GetMusicDTO>> getPopularMusicsByArtistId(@PathVariable String artistId) {
-        var popMusics = artistService.getPopularMusicsByArtistId(UUID.fromString(artistId));
+    public ResponseEntity<List<GetMusicDTO>> getPopularMusicsByArtistId(@PathVariable UUID artistId) {
+        var popMusics = artistService.getPopularMusicsByArtistId(artistId);
 
         List<GetMusicDTO> responseDTO = popMusics.stream().limit(5).map(musicMapper::toDTO).toList();
 
@@ -47,8 +47,8 @@ public class ArtistController {
     }
 
     @GetMapping("/{artistId}/albums")
-    public ResponseEntity<List<GetAlbumDTO>> getAlbumsByArtistId(@PathVariable String artistId) {
-        var albums = artistService.getAlbumsByArtistId(UUID.fromString(artistId));
+    public ResponseEntity<List<GetAlbumDTO>> getAlbumsByArtistId(@PathVariable UUID artistId) {
+        var albums = artistService.getAlbumsByArtistId(artistId);
 
         List<GetAlbumDTO> responseDTO = albums.stream().map(albumMapper::toDTO).toList();
 
