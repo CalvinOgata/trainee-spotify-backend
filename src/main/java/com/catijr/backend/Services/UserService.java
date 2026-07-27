@@ -3,8 +3,11 @@ package com.catijr.backend.Services;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,7 @@ import com.catijr.backend.DTOs.Playlist.GetPlaylistNoMusicDTO;
 import com.catijr.backend.Entities.Album;
 import com.catijr.backend.Entities.Artist;
 import com.catijr.backend.Entities.FollowedArtist;
+import com.catijr.backend.Entities.LibraryItem;
 import com.catijr.backend.Entities.Music;
 import com.catijr.backend.Entities.Playlist;
 import com.catijr.backend.Entities.SavedAlbum;
@@ -109,74 +113,92 @@ public class UserService {
     // ------------------------------------------------------------------
 
     public List<GetMusicDTO> getSavedMusics(){
-        return savedMusicRepository.findAll(ADDED_AT_DESC).stream()
-                .map(SavedMusic::getMusic)
-                .map(musicMapper::toDTO)
-                .toList();
+        return listLibrary(savedMusicRepository, SavedMusic::getMusic, musicMapper::toDTO);
     }
 
     @Transactional
     public void saveMusic(UUID musicId){
-        Music music = EntityLookup.getOr404(musicRepository, musicId);
-        if (!savedMusicRepository.existsById(musicId)) {
-            savedMusicRepository.save(
-                    SavedMusic.builder().music(music).addedAt(Instant.now()).build());
-        }
+        addToLibrary(musicRepository, savedMusicRepository, musicId,
+                (music, addedAt) -> SavedMusic.builder().music(music).addedAt(addedAt).build());
     }
 
     @Transactional
     public void unsaveMusic(UUID musicId){
-        EntityLookup.existsOr404(musicRepository, musicId);
-        if (savedMusicRepository.existsById(musicId)) {
-            savedMusicRepository.deleteById(musicId);
-        }
+        removeFromLibrary(musicRepository, savedMusicRepository, musicId);
     }
 
     public List<GetAlbumNoMusicsDTO> getSavedAlbums(){
-        return savedAlbumRepository.findAll(ADDED_AT_DESC).stream()
-                .map(SavedAlbum::getAlbum)
-                .map(albumMapper::toNoMusicsDTO)
-                .toList();
+        return listLibrary(savedAlbumRepository, SavedAlbum::getAlbum, albumMapper::toNoMusicsDTO);
     }
 
     @Transactional
     public void saveAlbum(UUID albumId){
-        Album album = EntityLookup.getOr404(albumRepository, albumId);
-        if (!savedAlbumRepository.existsById(albumId)) {
-            savedAlbumRepository.save(
-                    SavedAlbum.builder().album(album).addedAt(Instant.now()).build());
-        }
+        addToLibrary(albumRepository, savedAlbumRepository, albumId,
+                (album, addedAt) -> SavedAlbum.builder().album(album).addedAt(addedAt).build());
     }
 
     @Transactional
     public void unsaveAlbum(UUID albumId){
-        EntityLookup.existsOr404(albumRepository, albumId);
-        if (savedAlbumRepository.existsById(albumId)) {
-            savedAlbumRepository.deleteById(albumId);
-        }
+        removeFromLibrary(albumRepository, savedAlbumRepository, albumId);
     }
 
     public List<GetArtistDTO> getFollowedArtists(){
-        return followedArtistRepository.findAll(ADDED_AT_DESC).stream()
-                .map(FollowedArtist::getArtist)
-                .map(artistMapper::toDTO)
-                .toList();
+        return listLibrary(followedArtistRepository, FollowedArtist::getArtist, artistMapper::toDTO);
     }
 
     @Transactional
     public void followArtist(UUID artistId){
-        Artist artist = EntityLookup.getOr404(artistRepository, artistId);
-        if (!followedArtistRepository.existsById(artistId)) {
-            followedArtistRepository.save(
-                    FollowedArtist.builder().artist(artist).addedAt(Instant.now()).build());
-        }
+        addToLibrary(artistRepository, followedArtistRepository, artistId,
+                (artist, addedAt) -> FollowedArtist.builder().artist(artist).addedAt(addedAt).build());
     }
 
     @Transactional
     public void unfollowArtist(UUID artistId){
-        EntityLookup.existsOr404(artistRepository, artistId);
-        if (followedArtistRepository.existsById(artistId)) {
-            followedArtistRepository.deleteById(artistId);
+        removeFromLibrary(artistRepository, followedArtistRepository, artistId);
+    }
+
+    // ------------------------------------------------------------------
+    // Helpers genéricos das coleções de biblioteca. As três coleções só diferem
+    // em: (1) o repositório do catálogo, (2) o repositório da coleção e (3) como
+    // extrair/reconstruir a linha da coleção a partir do item do catálogo. Todo
+    // o fluxo — ordenação do GET, idempotência do POST/DELETE e o 404 apoiado no
+    // CATÁLOGO — é idêntico entre as três e mora aqui.
+    // ------------------------------------------------------------------
+
+    /** GET: item do catálogo de cada linha, mapeado para DTO, do mais recente ao mais antigo. */
+    private <C, L extends LibraryItem, D> List<D> listLibrary(
+            JpaRepository<L, UUID> libraryRepo,
+            Function<L, C> toCatalogItem,
+            Function<C, D> toDTO) {
+        return libraryRepo.findAll(ADDED_AT_DESC).stream()
+                .map(toCatalogItem)
+                .map(toDTO)
+                .toList();
+    }
+
+    /**
+     * POST idempotente: 404 se o item não existir no catálogo; se já estiver na
+     * coleção não faz nada (preserva o addedAt original).
+     */
+    private <C, L extends LibraryItem> void addToLibrary(
+            JpaRepository<C, UUID> catalogRepo,
+            JpaRepository<L, UUID> libraryRepo,
+            UUID id,
+            BiFunction<C, Instant, L> toLibraryRow) {
+        C item = EntityLookup.getOr404(catalogRepo, id);
+        if (!libraryRepo.existsById(id)) {
+            libraryRepo.save(toLibraryRow.apply(item, Instant.now()));
+        }
+    }
+
+    /** DELETE idempotente: 404 se o item não existir no catálogo; remove da coleção se presente. */
+    private void removeFromLibrary(
+            JpaRepository<?, UUID> catalogRepo,
+            JpaRepository<?, UUID> libraryRepo,
+            UUID id) {
+        EntityLookup.existsOr404(catalogRepo, id);
+        if (libraryRepo.existsById(id)) {
+            libraryRepo.deleteById(id);
         }
     }
 
