@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.catijr.backend.DTOs.Album.GetAlbumNoMusicsDTO;
 import com.catijr.backend.DTOs.Artist.GetArtistDTO;
 import com.catijr.backend.DTOs.Music.GetMusicDTO;
+import com.catijr.backend.DTOs.Play.RecordPlayDTO;
 import com.catijr.backend.DTOs.Playlist.GetPlaylistNoMusicDTO;
 import com.catijr.backend.Services.UserService;
 
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 
 @RestController
@@ -47,10 +49,9 @@ public class UserController {
     /*
     GET METHOD:
 
-    This method is used to list (the last 5) artists the user recently listened to,
-    since this project has no support for metrics that allow this to be
-    a functional route, the result of this method will be a fixed set of artists
-    initialized in the database
+    Lists the 8 artists the user most recently played, derived from tb_plays
+    (see POST /user/plays). Distinct artists, most-recently-played first; deleted
+    artists are filtered out and no plays yields an empty list.
     */
     @GetMapping("/recentArtists")
     public ResponseEntity<List<GetArtistDTO>> getUserRecentArtists() {
@@ -74,11 +75,10 @@ public class UserController {
 
     /*
     GET METHOD:
-    
-    This method is used to list the user's (last 5) recently played musics,
-    since this project has no support for metrics that allow this to be
-    a functional route, the result of this method will be a fixed set of musics
-    initialized in the database
+
+    Lists the 8 musics the user most recently played, derived from tb_plays
+    (see POST /user/plays). Distinct musics, most-recently-played first; deleted
+    musics are filtered out and no plays yields an empty list.
     */
     @GetMapping("/recentMusics")
     public ResponseEntity<List<GetMusicDTO>> getUserRecentMusics() {
@@ -100,11 +100,10 @@ public class UserController {
 
      /*
     GET METHOD:
-    
-    This method is used to list the user's (last 5) recently played albums,
-    since this project has no support for metrics that allow this to be
-    a functional route, the result of this method will be a fixed set of albums
-    initialized in the database
+
+    Lists the 8 albums the user most recently played, derived from tb_plays
+    (see POST /user/plays). Distinct albums, most-recently-played first; deleted
+    albums are filtered out and no plays yields an empty list.
     */
     @GetMapping("/recentAlbums")
     public ResponseEntity<List<GetAlbumNoMusicsDTO>> getUserRecentAlbums() {
@@ -123,6 +122,23 @@ public class UserController {
         List<String> followers =new ArrayList<>(List.of("deadbeat7","xmc0-Infinity","John Doe", "Jose Manuel Alberto Lopez","XCS_2026"));
 
         return ResponseEntity.ok(followers);
+    }
+
+    /*
+    POST METHOD:
+
+    Records a "qualified" play. The frontend only POSTs after min(30s, duration/2)
+    of listening, so there is NO threshold here — every call becomes a row in
+    tb_plays. Body: {"kind":"music|album|artist|playlist","id":"<entity-id>"}.
+    Feeds the /recent* endpoints, which dedup at read time. "playlist" is accepted
+    and stored even though it has no read endpoint yet.
+
+    204 No Content on success; 400 if kind/id are missing or malformed.
+    */
+    @PostMapping("/plays")
+    public ResponseEntity<Void> recordPlay(@RequestBody RecordPlayDTO play) {
+        userService.recordPlay(play.kind(), play.id());
+        return ResponseEntity.noContent().build();
     }
 
     /*

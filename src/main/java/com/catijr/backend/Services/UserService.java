@@ -2,14 +2,22 @@ package com.catijr.backend.Services;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.catijr.backend.DTOs.Album.GetAlbumNoMusicsDTO;
 import com.catijr.backend.DTOs.Artist.GetArtistDTO;
@@ -20,6 +28,8 @@ import com.catijr.backend.Entities.Artist;
 import com.catijr.backend.Entities.FollowedArtist;
 import com.catijr.backend.Entities.LibraryItem;
 import com.catijr.backend.Entities.Music;
+import com.catijr.backend.Entities.Play;
+import com.catijr.backend.Entities.PlayKind;
 import com.catijr.backend.Entities.Playlist;
 import com.catijr.backend.Entities.SavedAlbum;
 import com.catijr.backend.Entities.SavedMusic;
@@ -27,6 +37,7 @@ import com.catijr.backend.Repositories.AlbumRepository;
 import com.catijr.backend.Repositories.ArtistRepository;
 import com.catijr.backend.Repositories.FollowedArtistRepository;
 import com.catijr.backend.Repositories.MusicRepository;
+import com.catijr.backend.Repositories.PlayRepository;
 import com.catijr.backend.Repositories.PlaylistRepository;
 import com.catijr.backend.Repositories.SavedAlbumRepository;
 import com.catijr.backend.Repositories.SavedMusicRepository;
@@ -51,6 +62,8 @@ public class UserService {
     private final SavedAlbumRepository      savedAlbumRepository;
     private final FollowedArtistRepository  followedArtistRepository;
 
+    private final PlayRepository        playRepository;
+
     private final AlbumMapper           albumMapper;
     private final PlaylistMapper        playlistMapper;
     private final ArtistMapper          artistMapper;
@@ -58,6 +71,9 @@ public class UserService {
 
     // GET das coleções de biblioteca: mais recentemente adicionado primeiro.
     private static final Sort ADDED_AT_DESC = Sort.by(Sort.Direction.DESC, "addedAt");
+
+    // Quantos itens distintos os GET de "recentes" devolvem (derivados de tb_plays).
+    private static final int RECENT_LIMIT = 8;
 
 
     public List<GetPlaylistNoMusicDTO> getUserPlaylists(){
@@ -72,9 +88,7 @@ public class UserService {
     }
 
     public List<GetArtistDTO> getUserRecentArtists(){
-        List<Artist> artists = artistRepository.findTop5By();
-
-        return artists.stream().map(artistMapper::toDTO).toList();   
+        return recentByKind(PlayKind.ARTIST, artistRepository, Artist::getId, artistMapper::toDTO);
     }
 
     public List<GetArtistDTO> getUserMostPlayedArtists(){
@@ -84,9 +98,7 @@ public class UserService {
     }
 
     public List<GetMusicDTO> getUserRecentMusics(){
-        List<Music> musics = musicRepository.findTop5By();
-
-        return musics.stream().map(musicMapper::toDTO).toList();
+        return recentByKind(PlayKind.MUSIC, musicRepository, Music::getId, musicMapper::toDTO);
     }
 
     public List<GetMusicDTO> getUserMostPlayedMusics(){
@@ -96,9 +108,76 @@ public class UserService {
     }
 
     public List<GetAlbumNoMusicsDTO> getUserRecentAlbums(){
-        List<Album> albums= albumRepository.findTop5By();
+        return recentByKind(PlayKind.ALBUM, albumRepository, Album::getId, albumMapper::toNoMusicsDTO);
+    }
 
-        return albums.stream().map(albumMapper::toNoMusicsDTO).toList();
+    // ------------------------------------------------------------------
+    // Reproduções (tb_plays) — fonte de verdade dos GET de "recentes" acima.
+    //
+    // O frontend só faz POST depois de min(30s, duração/2) de escuta, então não
+    // há threshold aqui: toda chamada vira uma linha. A deduplicação ("N itens
+    // distintos, mais recente primeiro") mora na LEITURA (recentByKind), não na
+    // escrita. "playlist" é aceito e armazenado mesmo sem endpoint de leitura.
+    // ------------------------------------------------------------------
+
+    /** POST /user/plays: registra uma reprodução. 400 se kind/id forem inválidos. */
+    @Transactional
+    public void recordPlay(String kindRaw, String idRaw){
+        PlayKind kind = parsePlayKind(kindRaw);
+        UUID entityId = parseEntityId(idRaw);
+
+        playRepository.save(Play.builder()
+                .kind(kind)
+                .entityId(entityId)
+                .playedAt(Instant.now())
+                .build());
+    }
+
+    /**
+     * Fonte única dos três GET de "recentes": pega os ids das últimas
+     * {@code RECENT_LIMIT} entidades tocadas (distintas, mais recente primeiro),
+     * busca-as no catálogo e as remapeia de volta para a ORDEM de reprodução.
+     * Entidades apagadas somem naturalmente (findAllById não as devolve) e uma
+     * biblioteca sem plays vira lista vazia — nunca null.
+     */
+    private <T, D> List<D> recentByKind(
+            PlayKind kind,
+            JpaRepository<T, UUID> catalogRepo,
+            Function<T, UUID> idOf,
+            Function<T, D> toDTO) {
+        Pageable limit = PageRequest.of(0, RECENT_LIMIT);
+        List<UUID> recentIds = playRepository.findRecentEntityIds(kind, limit);
+
+        Map<UUID, T> byId = catalogRepo.findAllById(recentIds).stream()
+                .collect(Collectors.toMap(idOf, Function.identity()));
+
+        return recentIds.stream()
+                .map(byId::get)              // null se a entidade foi apagada -> filtrada abaixo
+                .filter(Objects::nonNull)
+                .map(toDTO)
+                .toList();
+    }
+
+    private PlayKind parsePlayKind(String raw){
+        if (raw == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "kind ausente");
+        }
+        try {
+            return PlayKind.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "kind inválido");
+        }
+    }
+
+    private UUID parseEntityId(String raw){
+        if (raw == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id ausente");
+        }
+        try {
+            return UUID.fromString(raw.trim());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id inválido");
+        }
     }
 
     // ------------------------------------------------------------------
