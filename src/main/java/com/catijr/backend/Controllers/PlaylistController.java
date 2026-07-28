@@ -51,6 +51,18 @@ public class PlaylistController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    // Adiciona uma música PERMITINDO DUPLICATAS (append incondicional). O frontend já
+    // confirmou o "tem certeza?" antes de chamar; diferente do PATCH acima, este NÃO
+    // rejeita se a música já estiver na playlist — cada chamada cria uma nova ocorrência.
+    // Corpo é ignorado (o cliente manda {} vazio). 404 se a playlist ou a música não existir.
+    @PostMapping("/{playlistId}/musics/{musicId}")
+    public ResponseEntity<GetPlaylistDTO> appendMusicToPlaylist(@PathVariable UUID playlistId,
+                                                                @PathVariable UUID musicId) {
+        GetPlaylistDTO responseDTO = playlistService.appendMusicToPlaylist(playlistId, musicId);
+
+        return ResponseEntity.ok(responseDTO);
+    }
+
     @PostMapping
     public GetPlaylistNoMusicDTO createPlaylist(@RequestBody CreatePlaylistDTO playlist) {
         return playlistService.createPlaylist(playlist);
