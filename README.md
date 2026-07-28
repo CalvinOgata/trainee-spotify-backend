@@ -40,9 +40,10 @@ Rotas destinadas à criação, atualização, exclusão e visualização de play
 | GET | /playlist/{playlistId} | Retorna todos os detalhes de uma playlist específica a partir do seu Id. |
 | POST | /playlist | Cria uma nova playlist. Espera um JSON estruturado no corpo da requisição. |
 | PUT | /playlist/{playlistId}/attributes | Atualiza os atributos de texto/metadados da playlist (exceto a lista de músicas). |
-| PATCH | /playlist/{playlistId}/{musicId} | Insere uma música específica (`musicId`) na playlist (`playlistId`). |
-| PUT | /playlist/{playlistId}/order | Reordena as músicas da playlist (usado pelo *drag-and-drop* do frontend). Espera no corpo `{ "musicIds": [...] }` com a ordem completa e final das músicas — o mesmo conjunto já presente na playlist (apenas reordenação, sem inserir/remover). A operação é idempotente. |
-| DELETE | /playlist/{playlistId}/{musicId} | Remove uma música específica (`musicId`) da playlist (`playlistId`). |
+| PATCH | /playlist/{playlistId}/{musicId} | Insere uma música (`musicId`) na playlist **apenas se ainda não estiver presente** (add do tipo *toggle*, sem duplicatas). `400` se a música já estiver na playlist; `404` se playlist/música não existir. |
+| POST | /playlist/{playlistId}/musics/{musicId} | Adiciona uma música (`musicId`) à playlist **permitindo duplicatas** — *append* incondicional: cada chamada acrescenta uma nova ocorrência no fim. Usado pelo frontend quando o usuário confirma o "tem certeza?" ao adicionar uma música já presente. Corpo vazio (`{}`, ignorado). Retorna a playlist completa (mesmo shape do `GET /playlist/{playlistId}`). `404` se playlist/música não existir. `musicQtd`/`duration` contam **ocorrências** (não músicas distintas). |
+| PUT | /playlist/{playlistId}/order | Reordena as músicas da playlist (usado pelo *drag-and-drop* do frontend). Espera no corpo `{ "musicIds": [...] }` com a ordem completa e final das músicas — o mesmo conjunto já presente na playlist (apenas reordenação, sem inserir/remover). A operação é idempotente. *(Não suporta playlists com músicas duplicadas: o corpo não pode repetir um `musicId`.)* |
+| DELETE | /playlist/{playlistId}/{musicId} | Remove a música (`musicId`) da playlist (`playlistId`) — **todas as ocorrências** dela (remoção por posição é um follow-up). |
 | DELETE | /playlist/{playlistId} | Exclui a playlist inteira do banco de dados. |
 
 ---
