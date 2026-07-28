@@ -2,16 +2,17 @@
 
 ## User (/user)
 Rotas responsáveis por buscar o histórico e os dados associados ao perfil do usuário. 
-*(Nota: Como o projeto foca em um único usuário estático, as rotas que dependem de métricas retornam dados fixos inicializados no banco).*
+*(Nota: Como o projeto foca em um único usuário estático, as rotas de **mais tocados** (`mostPlayed*`) e de **populares** ainda retornam dados fixos inicializados no banco. Já as rotas de **recentes** (`recent*`) são reais: derivam das reproduções registradas via `POST /user/plays`.)*
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
 | GET | /user/playlists | Retorna todas as playlists do banco de dados (equivalente às playlists do usuário). |
-| GET | /user/recentArtists | Retorna os artistas ouvidos recentemente. |
-| GET | /user/mostPlayedArtists | Retorna os artistas mais ouvidos. |
-| GET | /user/recentMusics | Retorna as músicas ouvidas recentemente. |
-| GET | /user/mostPlayedMusics | Retorna as músicas mais ouvidas. |
-| GET | /user/recentAlbums | Retorna os álbuns ouvidos recentemente. |
+| GET | /user/recentArtists | Retorna até 8 artistas distintos tocados recentemente (mais recente primeiro), derivados das reproduções (`POST /user/plays`). `[]` se não houver reproduções. |
+| GET | /user/mostPlayedArtists | Retorna os artistas mais ouvidos (dados fixos). |
+| GET | /user/recentMusics | Retorna até 8 músicas distintas tocadas recentemente (mais recente primeiro), derivadas das reproduções (`POST /user/plays`). `[]` se não houver reproduções. |
+| GET | /user/mostPlayedMusics | Retorna as músicas mais ouvidas (dados fixos). |
+| GET | /user/recentAlbums | Retorna até 8 álbuns distintos tocados recentemente (mais recente primeiro), derivados das reproduções (`POST /user/plays`). `[]` se não houver reproduções. |
+| POST | /user/plays | Registra uma reprodução "qualificada" (o frontend só chama após min(30s, dur/2) de escuta — sem threshold no backend). Corpo `{ "kind": "music\|album\|artist\|playlist", "id": "<id>" }`. `204`; `400` se `kind`/`id` inválidos. Alimenta as rotas `recent*`; `playlist` é aceito e armazenado, mas ainda não há rota de leitura. |
 | GET | /user/followers | Retorna a lista de todos os seguidores do usuário. |
 
 ### Biblioteca (músicas salvas, álbuns salvos e artistas seguidos)
