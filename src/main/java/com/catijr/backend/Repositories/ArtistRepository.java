@@ -11,7 +11,5 @@ import java.util.UUID;
 @Repository
 public interface ArtistRepository extends JpaRepository<Artist, UUID> {
 
-    List<Artist> findTop5By();
-
     List<Artist> findTop5ByOrderByListenersDesc();
 }
