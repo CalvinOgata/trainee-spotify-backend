@@ -9,6 +9,7 @@ import com.catijr.backend.utils.EntityLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,8 +29,13 @@ public class ArtistService {
 
         List<Music> pop = artist.getSongs();
 
-        // CORREÇÃO: o comparador estava em ordem crescente, retornando as músicas menos ouvidas em vez das mais populares
-        pop.sort((m1, m2) -> Integer.compare(m2.getTimesListen(), m1.getTimesListen()));
+        // Ordena por popularidade (timesListen) em ordem DECRESCENTE. Empate é
+        // desfeito pelo título em ordem alfabética CRESCENTE, de forma determinística
+        // (ex.: se 'Música 3' e 'Música 4' têm o mesmo timesListen, 'Música 3' vem
+        // primeiro). Sem esse desempate, faixas empatadas sairiam na ordem que o
+        // banco devolvesse — não garantida.
+        pop.sort(Comparator.comparingInt(Music::getTimesListen).reversed()
+                .thenComparing(Music::getTitle));
 
         return pop;
     }
