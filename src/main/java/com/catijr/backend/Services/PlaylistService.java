@@ -125,23 +125,43 @@ public class PlaylistService {
         playlistRepository.deleteById(playlistId);
     }
 
-    public void deleteMusicById(UUID playlistId, UUID musicId) {
-        var playlist = EntityLookup.getOr404(playlistRepository, playlistId);
+    /**
+     * DELETE /playlist/{playlistId}/positions/{position}: remove a ocorrência na
+     * POSIÇÃO informada (índice 0-based na ordem da tracklist). Substitui o antigo
+     * "remove por musicId" (que apagava TODAS as ocorrências) e suporta playlists
+     * com duplicatas: apaga exatamente uma linha.
+     *
+     * <p>Compactação das posições é AUTOMÁTICA: o relacionamento é {@code @OrderColumn}
+     * ({@code song_position}), então ao remover o elemento do índice {@code position}
+     * da lista e regravá-la, o Hibernate reescreve as posições restantes de forma
+     * contígua (0..N-2) — não é preciso um UPDATE manual de "position - 1".
+     *
+     * <p>Tudo numa transação com o MESMO lock pessimista do reorder/append
+     * ({@link PlaylistRepository#findByIdForUpdate}): deletes concorrentes na mesma
+     * playlist serializam, sem estado parcial que corromperia a matemática de posição.
+     * Posição fora do intervalo (inclusive uma linha que outro delete já removeu) → 404.
+     */
+    @Transactional
+    public GetPlaylistDTO removeMusicAtPosition(UUID playlistId, int position) {
+        Playlist playlist = playlistRepository.findByIdForUpdate(playlistId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        if (playlistRepository.musicExistsById(playlistId, musicId)) {
-            var music = EntityLookup.getOr404(musicRepository, musicId);
-            List<Music> musics = new ArrayList<>(playlist.getSongs());
+        List<Music> musics = playlist.getSongs() == null
+                ? new ArrayList<>()
+                : new ArrayList<>(playlist.getSongs());
 
-            musics.removeIf(tgt_music -> tgt_music.getId().equals(musicId));
-
-            playlist.setMusicQtd(playlist.getMusicQtd() - 1);
-            playlist.setDuration(playlist.getDuration() - music.getDuration());
-
-            playlist.setSongs(musics);
-
-            playlistRepository.save(playlist);
-        } else {
+        if (position < 0 || position >= musics.size()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
+
+        Music removed = musics.remove(position);
+
+        playlist.setSongs(musics); // @OrderColumn recompacta song_position (0..N-2)
+        playlist.setMusicQtd(playlist.getMusicQtd() - 1);
+        playlist.setDuration(playlist.getDuration() - removed.getDuration());
+
+        Playlist saved = playlistRepository.save(playlist);
+
+        return playlistMapper.toFullDTO(saved);
     }
 }

@@ -76,11 +76,17 @@ public class PlaylistController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{playlistId}/{musicId}")
-    public ResponseEntity<Void> deleteMusicById(@PathVariable UUID playlistId,
-                                                @PathVariable UUID musicId) {
-        playlistService.deleteMusicById(playlistId, musicId);
+    // Remove a ocorrência na POSIÇÃO informada (índice 0-based na ordem da tracklist).
+    // Substitui o antigo DELETE /{playlistId}/{musicId} (que apagava TODAS as ocorrências):
+    // suporta playlists com duplicatas apagando exatamente uma linha, e o @OrderColumn
+    // recompacta as posições restantes. Retorna a playlist atualizada (mesmo shape do GET,
+    // simetria com add/append/reorder). 404 se a playlist não existir ou a posição estiver
+    // fora do intervalo. `position` não-inteiro -> 400 (bind do Spring).
+    @DeleteMapping("/{playlistId}/positions/{position}")
+    public ResponseEntity<GetPlaylistDTO> removeMusicAtPosition(@PathVariable UUID playlistId,
+                                                                @PathVariable int position) {
+        GetPlaylistDTO responseDTO = playlistService.removeMusicAtPosition(playlistId, position);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(responseDTO);
     }
 }
