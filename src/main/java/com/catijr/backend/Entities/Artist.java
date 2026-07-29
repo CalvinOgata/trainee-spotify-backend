@@ -42,6 +42,12 @@ public class Artist {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    // Última reprodução "promovida" (kind=artist) deste artista: atualizado pelo
+    // POST /user/plays (UserService.recordPlay), NULL até a primeira reprodução
+    // (nunca é backfilled). ISO-8601 UTC no JSON, igual a createdAt/updatedAt.
+    @Column(name = "last_played_at")
+    private Instant lastPlayedAt;
+
     @PrePersist
     public void onPrePersist() {
         this.createdAt = Instant.now();

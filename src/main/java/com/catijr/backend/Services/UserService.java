@@ -126,11 +126,28 @@ public class UserService {
         PlayKind kind = parsePlayKind(kindRaw);
         UUID entityId = parseEntityId(idRaw);
 
+        Instant now = Instant.now();
         playRepository.save(Play.builder()
                 .kind(kind)
                 .entityId(entityId)
-                .playedAt(Instant.now())
+                .playedAt(now)
                 .build());
+
+        // Denormaliza lastPlayedAt na entidade de catálogo correspondente ao kind,
+        // para o frontend ordenar a biblioteca por recência sem consultar tb_plays.
+        // Se a entidade não existir (id desconhecido/apagado), o UPDATE afeta 0 linhas
+        // — sem erro, igual à tolerância do insert em tb_plays.
+        stampLastPlayed(kind, entityId, now);
+    }
+
+    /** Carimba lastPlayedAt na tabela de catálogo do {@code kind} (UPDATE tolerante). */
+    private void stampLastPlayed(PlayKind kind, UUID entityId, Instant when){
+        switch (kind) {
+            case MUSIC    -> musicRepository.touchLastPlayedAt(entityId, when);
+            case ALBUM    -> albumRepository.touchLastPlayedAt(entityId, when);
+            case ARTIST   -> artistRepository.touchLastPlayedAt(entityId, when);
+            case PLAYLIST -> playlistRepository.touchLastPlayedAt(entityId, when);
+        }
     }
 
     /**
