@@ -10,9 +10,15 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = MusicMapper.class)
 public interface PlaylistMapper {
 
+    // O getter Lombok do campo boolean 'isPrivate' é isPrivate(), que o MapStruct lê
+    // como a propriedade "private" (remove o prefixo "is"). O componente do record é
+    // "isPrivate", então SEM este @Mapping explícito o MapStruct não casa os dois e
+    // devolve false fixo. Mapeamos a origem "private" -> alvo "isPrivate".
+    @Mapping(target = "isPrivate", source = "private")
     GetPlaylistNoMusicDTO toDTO(Playlist playlist);
 
     @Mapping(target = "musics", source = "songs")
+    @Mapping(target = "isPrivate", source = "private")
     GetPlaylistDTO toFullDTO(Playlist playlist);
 
     // Playlist recém-criada nasce sem capa (image_url NULL); o front usa sua arte padrão.

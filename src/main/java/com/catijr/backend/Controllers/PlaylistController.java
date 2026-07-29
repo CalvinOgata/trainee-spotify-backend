@@ -4,6 +4,7 @@ package com.catijr.backend.Controllers;
 import com.catijr.backend.DTOs.Playlist.GetPlaylistDTO;
 import com.catijr.backend.DTOs.Playlist.GetPlaylistNoMusicDTO;
 import com.catijr.backend.DTOs.Playlist.PutPlaylistDTO;
+import com.catijr.backend.DTOs.Playlist.SetPlaylistPrivacyDTO;
 import com.catijr.backend.DTOs.Playlist.CreatePlaylistDTO;
 import com.catijr.backend.Mappers.PlaylistMapper;
 import com.catijr.backend.Services.PlaylistService;
@@ -66,6 +67,19 @@ public class PlaylistController {
     @PostMapping
     public GetPlaylistNoMusicDTO createPlaylist(@RequestBody CreatePlaylistDTO playlist) {
         return playlistService.createPlaylist(playlist);
+    }
+
+    // Set EXPLÍCITO (não toggle) da privacidade. Corpo: { "isPrivate": bool }. Retorna o
+    // summary atualizado (mesmo shape do PUT /attributes) p/ o front atualizar o estado
+    // local sem um GET extra. 400 se isPrivate ausente; 404 se não existir; 409 na
+    // "Músicas Curtidas" (sempre privada). Endpoint SEPARADO do /attributes de propósito:
+    // privacidade é um conceito de permissão distinto de nome/descrição.
+    @PatchMapping("/{playlistId}/private")
+    public ResponseEntity<GetPlaylistNoMusicDTO> setPlaylistPrivacy(@PathVariable UUID playlistId,
+                                                                    @RequestBody SetPlaylistPrivacyDTO body) {
+        GetPlaylistNoMusicDTO responseDTO = playlistService.setPrivacy(playlistId, body.isPrivate());
+
+        return ResponseEntity.ok(responseDTO);
     }
 
 

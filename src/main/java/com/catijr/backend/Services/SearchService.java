@@ -76,6 +76,10 @@ public class SearchService {
                 }
             }
 
+            // Filtro de privacidade (read-side): quando houver auth, excluir daqui as
+            // playlists privadas de OUTROS usuários (isPrivate && !éDoChamador). Hoje é
+            // no-op — projeto single-user: o único buscador é o dono, e o dono vê sempre
+            // as próprias privadas. Filtrar agora as esconderia do próprio dono (errado).
             return new SearchResponseDTO(
                     musicRows.stream().map(musicMapper::toDTO).toList(),
                     playlistRows.stream().map(playlistMapper::toDTO).toList(),

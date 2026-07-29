@@ -31,6 +31,10 @@ public class PlaylistService {
     private final MusicRepository musicRepository;
     private final PlaylistMapper playlistMapper;
 
+    // Playlist de sistema "Curtidas": única por usuário e SEMPRE privada — nunca
+    // pode virar pública (ver setPrivacy). Identificada pelo nome, como a semeia o DataSeeder.
+    private static final String LIKED_SONGS_NAME = "Músicas Curtidas";
+
     public Playlist getPlaylistById(UUID playlistId) {
         var playlist = EntityLookup.getOr404(playlistRepository, playlistId);
 
@@ -51,6 +55,37 @@ public class PlaylistService {
         var edited = playlistRepository.save(playlist);
 
         return edited;
+    }
+
+    /**
+     * PATCH /playlist/{id}/private — define (set EXPLÍCITO, não toggle) se a playlist
+     * é privada. Devolve o summary atualizado (mesmo shape do PUT /attributes) para o
+     * frontend atualizar o estado local sem um GET extra.
+     *
+     * <p>400 se {@code isPrivate} ausente; 404 se a playlist não existir; 409 se for a
+     * "Músicas Curtidas" (playlist de sistema, SEMPRE privada — não pode virar pública).
+     *
+     * <p><b>Autorização (hoje no-op):</b> só o dono deveria poder alterar (403 para os
+     * demais). Não há auth nem campo de dono neste projeto single-user — igual ao
+     * reorder ({@link PlaylistReorderService}). Quando houver auth, checar o dono AQUI,
+     * antes de qualquer escrita, e lançar 403 para não-donos.
+     */
+    public GetPlaylistNoMusicDTO setPrivacy(UUID playlistId, Boolean isPrivate) {
+        if (isPrivate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "isPrivate ausente");
+        }
+
+        Playlist playlist = EntityLookup.getOr404(playlistRepository, playlistId);
+
+        if (LIKED_SONGS_NAME.equals(playlist.getName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A playlist 'Músicas Curtidas' é sempre privada e não pode ser alterada");
+        }
+
+        playlist.setPrivate(isPrivate);
+        Playlist saved = playlistRepository.save(playlist);
+
+        return playlistMapper.toDTO(saved);
     }
 
     public Playlist addMusicToPlaylist(UUID playlistId, UUID musicId) {

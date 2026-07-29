@@ -2,6 +2,7 @@ package com.catijr.backend.Entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 import java.util.List;
@@ -44,6 +45,13 @@ public class Playlist {
     // arte padrão nesse caso. NUNCA uma URL absoluta (o front prefixa a base).
     @Column(name = "image_url")
     private String imageUrl;
+
+    // Privacidade da playlist (server-owned). true = oculta de todos menos o dono.
+    // NOT NULL com default false (pública). O @ColumnDefault garante que o ddl-auto
+    // adicione a coluna já com "default false", preenchendo as linhas existentes.
+    @Column(name = "is_private", nullable = false)
+    @ColumnDefault("false")
+    private boolean isPrivate;
 
     @PrePersist
     public void onPrePersist() {
