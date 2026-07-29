@@ -35,11 +35,14 @@ Coleções persistentes do usuário (implícito — o app tem um único usuário
 ## Playlist (/playlist)
 Rotas destinadas à criação, atualização, exclusão e visualização de playlists e suas músicas.
 
+*Toda resposta de playlist (summary e completa) inclui o campo booleano **`isPrivate`** — atributo server-owned, `false` (pública) por padrão. `true` = oculta de todos menos o dono. A playlist de sistema "Músicas Curtidas" é sempre privada. É alterado só pelo `PATCH /playlist/{id}/private` (nunca pelo `/attributes`).*
+
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
 | GET | /playlist/{playlistId} | Retorna todos os detalhes de uma playlist específica a partir do seu Id. |
-| POST | /playlist | Cria uma nova playlist. Espera um JSON estruturado no corpo da requisição. |
-| PUT | /playlist/{playlistId}/attributes | Atualiza os atributos de texto/metadados da playlist (exceto a lista de músicas). |
+| POST | /playlist | Cria uma nova playlist. Espera um JSON estruturado no corpo da requisição. Nasce com `isPrivate = false`. |
+| PUT | /playlist/{playlistId}/attributes | Atualiza os atributos de texto/metadados da playlist (exceto a lista de músicas). **Não** altera `isPrivate` (privacidade tem endpoint próprio). |
+| PATCH | /playlist/{playlistId}/private | Define (set **explícito**, não toggle) a privacidade da playlist. Corpo: `{ "isPrivate": bool }`. Retorna o *summary* atualizado (mesmo shape do `PUT /attributes`), para o front atualizar o estado local sem um GET extra. `400` se `isPrivate` ausente; `404` se a playlist não existir; `409` na "Músicas Curtidas" (playlist de sistema, sempre privada). *(Autorização de dono: hoje no-op — projeto single-user, sem auth; quando houver, 403 para não-donos.)* |
 | PATCH | /playlist/{playlistId}/{musicId} | Insere uma música (`musicId`) na playlist **apenas se ainda não estiver presente** (add do tipo *toggle*, sem duplicatas). `400` se a música já estiver na playlist; `404` se playlist/música não existir. |
 | POST | /playlist/{playlistId}/musics/{musicId} | Adiciona uma música (`musicId`) à playlist **permitindo duplicatas** — *append* incondicional: cada chamada acrescenta uma nova ocorrência no fim. Usado pelo frontend quando o usuário confirma o "tem certeza?" ao adicionar uma música já presente. Corpo vazio (`{}`, ignorado). Retorna a playlist completa (mesmo shape do `GET /playlist/{playlistId}`). `404` se playlist/música não existir. `musicQtd`/`duration` contam **ocorrências** (não músicas distintas). |
 | PUT | /playlist/{playlistId}/order | Reordena as músicas da playlist (usado pelo *drag-and-drop* do frontend). Espera no corpo `{ "musicIds": [...] }` com a ordem completa e final das músicas — o mesmo conjunto já presente na playlist (apenas reordenação, sem inserir/remover). A operação é idempotente. *(Não suporta playlists com músicas duplicadas: o corpo não pode repetir um `musicId`.)* |
