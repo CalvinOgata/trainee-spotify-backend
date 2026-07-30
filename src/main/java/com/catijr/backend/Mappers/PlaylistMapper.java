@@ -14,11 +14,15 @@ public interface PlaylistMapper {
     // como a propriedade "private" (remove o prefixo "is"). O componente do record é
     // "isPrivate", então SEM este @Mapping explícito o MapStruct não casa os dois e
     // devolve false fixo. Mapeamos a origem "private" -> alvo "isPrivate".
+    // lastPlayedAt não é mais coluna: é derivado de tb_plays e carimbado na SERVICE
+    // (UserService.getUserPlaylists). Aqui fica null.
     @Mapping(target = "isPrivate", source = "private")
+    @Mapping(target = "lastPlayedAt", ignore = true)
     GetPlaylistNoMusicDTO toDTO(Playlist playlist);
 
     @Mapping(target = "musics", source = "songs")
     @Mapping(target = "isPrivate", source = "private")
+    @Mapping(target = "lastPlayedAt", ignore = true)
     GetPlaylistDTO toFullDTO(Playlist playlist);
 
     // Playlist recém-criada nasce sem capa (image_url NULL); o front usa sua arte padrão.

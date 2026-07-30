@@ -21,6 +21,9 @@ public interface MusicMapper {
     // álbum (mesmo resolver do AlbumMapper): override no banco vence, senão deriva
     // pelo id do álbum. Álbum nulo -> null (o resolver é null-safe).
     @Mapping(target = "imageUrl", source = "album", qualifiedByName = "albumImageUrl")
+    // lastPlayedAt não é mais coluna: é derivado de tb_plays e carimbado na SERVICE
+    // apenas nos endpoints de biblioteca (UserService). Aqui fica null.
+    @Mapping(target = "lastPlayedAt", ignore = true)
     GetMusicDTO toDTO(Music music);
 
     default UUID playlistToId(Playlist playlist) {

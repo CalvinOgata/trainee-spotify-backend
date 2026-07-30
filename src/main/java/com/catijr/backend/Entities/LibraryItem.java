@@ -1,38 +1,45 @@
 package com.catijr.backend.Entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.SuperBuilder;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Base das coleções de biblioteca (músicas salvas, álbuns salvos e artistas
- * seguidos). O app tem um único usuário implícito, então NÃO há coluna de
- * usuário: a PK ({@code item_id}) é o próprio id do item, compartilhada via
- * {@link jakarta.persistence.MapsId @MapsId} com a FK para a tabela do catálogo
- * — mapeada na subclasse. Isso garante no máximo uma linha por item
- * (idempotência da PK). {@code addedAt} ordena o GET: mais recente primeiro.
+ * Uma entrada da biblioteca do usuário: música salva, álbum salvo ou artista
+ * seguido — as três antes eram tabelas idênticas (saved_music, saved_album,
+ * followed_artist) e agora vivem numa única tabela polimórfica {@code
+ * library_items}, discriminada por {@link #kind} (mesmo estilo de
+ * {@link Play}/tb_plays).
  *
- * <p>Cada subclasse só precisa declarar a associação tipada
- * ({@code @ManyToOne @MapsId} para Music/Album/Artist) e a sua própria
- * {@code @Table} — o resto do mapeamento (PK compartilhada + addedAt) mora aqui.
+ * <p>Projeto single-user: NÃO há coluna de usuário. A PK é o próprio
+ * {@code item_id} (o id do item no catálogo). Como os UUID do catálogo são
+ * globalmente únicos, um id pertence a exatamente uma música/álbum/artista, então
+ * a PK sozinha já garante no máximo uma linha por item (idempotência de
+ * save/follow) — não é preciso PK composta com o kind.
+ *
+ * <p>SEM FK para o catálogo (polimórfica, igual a tb_plays): o {@code item_id}
+ * cruza três tabelas, e um item apagado é simplesmente filtrado na leitura (o
+ * catálogo não o devolve), sem 500. {@code addedAt} ordena o GET: mais
+ * recentemente adicionado primeiro.
  */
-@MappedSuperclass
+@Entity
+@Table(name = "library_items")
 @Getter
 @Setter
 @NoArgsConstructor
-@SuperBuilder
-public abstract class LibraryItem {
+@AllArgsConstructor
+@Builder
+public class LibraryItem {
 
     @Id
     @Column(name = "item_id")
     private UUID itemId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kind", nullable = false)
+    private LibraryKind kind;
 
     @Column(name = "added_at", nullable = false)
     private Instant addedAt;

@@ -9,8 +9,8 @@ import java.util.UUID;
 public record GetPlaylistDTO(UUID id, String name, String description, int musicQtd,
                              int duration, List<GetMusicDTO> musics,
                              Instant createdAt, Instant updatedAt,
-                             // Última reprodução desta playlist (kind=playlist) pelo usuário, ISO-8601 UTC ou null.
-                             // Server-owned, derivado de POST /user/plays. Ver Playlist.lastPlayedAt.
+                             // Última reprodução desta playlist pelo usuário (ISO-8601 UTC) ou null. Derivado
+                             // de tb_plays; hoje não é preenchido no GET de playlist completa (null aqui).
                              Instant lastPlayedAt,
                              // Caminho relativo da capa (ex.: "/images/playlists/<id>.jpg") ou null.
                              String imageUrl,
