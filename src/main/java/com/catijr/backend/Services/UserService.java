@@ -214,9 +214,12 @@ public class UserService {
                 Music::getId, musicMapper::toDTO, this::withLastPlayed);
     }
 
+    /** Salva a música e DEVOLVE o DTO (com lastPlayedAt derivado) para o front
+     *  inserir o item já na posição de recência correta, sem um GET extra. */
     @Transactional
-    public void saveMusic(UUID musicId){
-        addToLibrary(musicRepository, LibraryKind.MUSIC, musicId);
+    public GetMusicDTO saveMusic(UUID musicId){
+        Music music = addToLibrary(musicRepository, LibraryKind.MUSIC, musicId);
+        return withLastPlayed(musicMapper.toDTO(music), lastPlayedOf(PlayKind.MUSIC, musicId));
     }
 
     @Transactional
@@ -230,8 +233,9 @@ public class UserService {
     }
 
     @Transactional
-    public void saveAlbum(UUID albumId){
-        addToLibrary(albumRepository, LibraryKind.ALBUM, albumId);
+    public GetAlbumNoMusicsDTO saveAlbum(UUID albumId){
+        Album album = addToLibrary(albumRepository, LibraryKind.ALBUM, albumId);
+        return withLastPlayed(albumMapper.toNoMusicsDTO(album), lastPlayedOf(PlayKind.ALBUM, albumId));
     }
 
     @Transactional
@@ -245,8 +249,9 @@ public class UserService {
     }
 
     @Transactional
-    public void followArtist(UUID artistId){
-        addToLibrary(artistRepository, LibraryKind.ARTIST, artistId);
+    public GetArtistDTO followArtist(UUID artistId){
+        Artist artist = addToLibrary(artistRepository, LibraryKind.ARTIST, artistId);
+        return withLastPlayed(artistMapper.toDTO(artist), lastPlayedOf(PlayKind.ARTIST, artistId));
     }
 
     @Transactional
@@ -292,10 +297,11 @@ public class UserService {
 
     /**
      * POST idempotente: 404 se o item não existir no catálogo; se já estiver na
-     * biblioteca não faz nada (preserva o addedAt original).
+     * biblioteca não faz nada (preserva o addedAt original). Devolve a entidade do
+     * catálogo para o caller montar o DTO de resposta.
      */
-    private void addToLibrary(JpaRepository<?, UUID> catalogRepo, LibraryKind kind, UUID id) {
-        EntityLookup.existsOr404(catalogRepo, id);
+    private <C> C addToLibrary(JpaRepository<C, UUID> catalogRepo, LibraryKind kind, UUID id) {
+        C item = EntityLookup.getOr404(catalogRepo, id);
         if (!libraryItemRepository.existsById(id)) {
             libraryItemRepository.save(LibraryItem.builder()
                     .itemId(id)
@@ -303,6 +309,12 @@ public class UserService {
                     .addedAt(Instant.now())
                     .build());
         }
+        return item;
+    }
+
+    /** lastPlayedAt de um único item (derivado de tb_plays), ou null se nunca tocado. */
+    private Instant lastPlayedOf(PlayKind kind, UUID id) {
+        return recencyMap(kind, List.of(id)).get(id);
     }
 
     /** DELETE idempotente: 404 se o item não existir no catálogo; remove da biblioteca se presente. */

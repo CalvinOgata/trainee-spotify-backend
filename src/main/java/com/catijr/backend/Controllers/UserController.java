@@ -144,10 +144,12 @@ public class UserController {
     /*
     BIBLIOTECA — músicas salvas, álbuns salvos e artistas seguidos.
 
-    Cada coleção tem um GET (itens ordenados por adição, mais recente primeiro)
-    e um par POST/DELETE idempotente por id: ambos retornam 204 independentemente
-    de a linha já existir/estar ausente. O 404 só ocorre quando a própria
-    música/álbum/artista referenciada não existe no catálogo.
+    Cada coleção tem um GET (itens ordenados por adição, mais recente primeiro),
+    um POST idempotente que SALVA e devolve 200 + o item salvo (DTO com lastPlayedAt
+    já derivado de tb_plays, para o front inserir na posição de recência correta sem
+    um GET extra) e um DELETE idempotente que devolve 204. Ambos são idempotentes:
+    re-salvar devolve o mesmo item (preservando o addedAt), re-remover é no-op. O 404
+    só ocorre quando a própria música/álbum/artista referenciada não existe no catálogo.
     */
 
     @GetMapping("/savedMusics")
@@ -156,9 +158,8 @@ public class UserController {
     }
 
     @PostMapping("/savedMusics/{musicId}")
-    public ResponseEntity<Void> saveMusic(@PathVariable UUID musicId) {
-        userService.saveMusic(musicId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<GetMusicDTO> saveMusic(@PathVariable UUID musicId) {
+        return ResponseEntity.ok(userService.saveMusic(musicId));
     }
 
     @DeleteMapping("/savedMusics/{musicId}")
@@ -173,9 +174,8 @@ public class UserController {
     }
 
     @PostMapping("/savedAlbums/{albumId}")
-    public ResponseEntity<Void> saveAlbum(@PathVariable UUID albumId) {
-        userService.saveAlbum(albumId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<GetAlbumNoMusicsDTO> saveAlbum(@PathVariable UUID albumId) {
+        return ResponseEntity.ok(userService.saveAlbum(albumId));
     }
 
     @DeleteMapping("/savedAlbums/{albumId}")
@@ -190,9 +190,8 @@ public class UserController {
     }
 
     @PostMapping("/followedArtists/{artistId}")
-    public ResponseEntity<Void> followArtist(@PathVariable UUID artistId) {
-        userService.followArtist(artistId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<GetArtistDTO> followArtist(@PathVariable UUID artistId) {
+        return ResponseEntity.ok(userService.followArtist(artistId));
     }
 
     @DeleteMapping("/followedArtists/{artistId}")
