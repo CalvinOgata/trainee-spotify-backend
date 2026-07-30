@@ -12,22 +12,24 @@ Rotas responsáveis por buscar o histórico e os dados associados ao perfil do u
 | GET | /user/recentMusics | Retorna até 8 músicas distintas tocadas recentemente (mais recente primeiro), derivadas das reproduções (`POST /user/plays`). `[]` se não houver reproduções. |
 | GET | /user/mostPlayedMusics | Retorna as músicas mais ouvidas (dados fixos). |
 | GET | /user/recentAlbums | Retorna até 8 álbuns distintos tocados recentemente (mais recente primeiro), derivados das reproduções (`POST /user/plays`). `[]` se não houver reproduções. |
-| POST | /user/plays | Registra uma reprodução "qualificada" (o frontend só chama após min(30s, dur/2) de escuta — sem threshold no backend). Corpo `{ "kind": "music\|album\|artist\|playlist", "id": "<id>" }`. `204`; `400` se `kind`/`id` inválidos. Alimenta as rotas `recent*`; `playlist` é aceito e armazenado, mas ainda não há rota de leitura. |
+| POST | /user/plays | Registra uma reprodução "qualificada" (o frontend só chama após min(30s, dur/2) de escuta — sem threshold no backend). Corpo `{ "kind": "music\|album\|artist\|playlist", "id": "<id>" }`. `204`; `400` se `kind`/`id` inválidos. Grava **uma** linha em `tb_plays` e nada mais — é a **fonte única de recência**: alimenta tanto as rotas `recent*` quanto o campo `lastPlayedAt` da biblioteca (ambos derivados na leitura). `playlist` é aceito e alimenta o `lastPlayedAt` de `/user/playlists`. |
 | GET | /user/followers | Retorna a lista de todos os seguidores do usuário. |
 
 ### Biblioteca (músicas salvas, álbuns salvos e artistas seguidos)
-Coleções persistentes do usuário (implícito — o app tem um único usuário, sem coluna de usuário). Cada coleção tem um `GET` (itens ordenados por adição, **mais recente primeiro**) e um par `POST`/`DELETE` por id. As mutações são **idempotentes**: retornam `204 No Content` tanto se a linha já existia quanto se já estava ausente. O `404` só ocorre quando a própria música/álbum/artista referenciada **não existe** no catálogo. *(Playlists já são cobertas por `/user/playlists` — não entram aqui.)*
+Coleções persistentes do usuário (implícito — o app tem um único usuário, sem coluna de usuário). As três coleções vivem numa **única tabela polimórfica** `library_items`, discriminada por `kind` (`MUSIC`/`ALBUM`/`ARTIST`) — no mesmo estilo de `tb_plays`. Cada coleção tem um `GET` (itens ordenados por adição, **mais recente primeiro**), um `POST` que **salva e devolve `200` + o item salvo** e um `DELETE` que devolve **`204 No Content`**. Ambos são **idempotentes**: re-salvar devolve o mesmo item (preservando o `addedAt`), re-remover é no-op. O `404` só ocorre quando a própria música/álbum/artista referenciada **não existe** no catálogo. *(Playlists já são cobertas por `/user/playlists` — não entram aqui.)*
+
+*Todo item de biblioteca — e as playlists de `/user/playlists` — traz o campo **`lastPlayedAt`** (ISO-8601 UTC ou `null`): a última reprodução daquele item, **derivada de `tb_plays`** em tempo de leitura (não é mais uma coluna denormalizada do catálogo). É preenchido **apenas** nessas rotas de biblioteca/playlists; nas demais respostas (detalhe de álbum/playlist, `recent*`, `mostPlayed*`, busca) vem `null`. Serve para o front ordenar a biblioteca por "tocado recentemente". Por isso o `POST` devolve o item já com o `lastPlayedAt` derivado: o front insere na posição de recência correta sem um `GET` extra.*
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
 | GET | /user/savedMusics | Retorna as músicas salvas (`Music[]`), da mais recente para a mais antiga. |
-| POST | /user/savedMusics/{musicId} | Salva a música na biblioteca. `204`; `404` se a música não existir. |
+| POST | /user/savedMusics/{musicId} | Salva a música e retorna `200` + a música salva (`Music`, com `lastPlayedAt` derivado). Idempotente (re-salvar devolve o mesmo item). `404` se a música não existir. |
 | DELETE | /user/savedMusics/{musicId} | Remove a música da biblioteca. `204`; `404` se a música não existir. |
 | GET | /user/savedAlbums | Retorna os álbuns salvos (`AlbumSummary[]`), do mais recente para o mais antigo. |
-| POST | /user/savedAlbums/{albumId} | Salva o álbum na biblioteca. `204`; `404` se o álbum não existir. |
+| POST | /user/savedAlbums/{albumId} | Salva o álbum e retorna `200` + o álbum salvo (`AlbumSummary`, com `lastPlayedAt` derivado). Idempotente (re-salvar devolve o mesmo item). `404` se o álbum não existir. |
 | DELETE | /user/savedAlbums/{albumId} | Remove o álbum da biblioteca. `204`; `404` se o álbum não existir. |
 | GET | /user/followedArtists | Retorna os artistas seguidos (`Artist[]`), do seguido mais recentemente ao mais antigo. |
-| POST | /user/followedArtists/{artistId} | Segue o artista. `204`; `404` se o artista não existir. |
+| POST | /user/followedArtists/{artistId} | Segue o artista e retorna `200` + o artista (`Artist`, com `lastPlayedAt` derivado). Idempotente (re-seguir devolve o mesmo item). `404` se o artista não existir. |
 | DELETE | /user/followedArtists/{artistId} | Deixa de seguir o artista. `204`; `404` se o artista não existir. |
 
 ---
