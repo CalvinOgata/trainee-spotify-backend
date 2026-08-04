@@ -1,3 +1,49 @@
+# Trainee Spotify — Backend
+
+Backend do projeto trainee (clone do Spotify) em **Spring Boot 4** (Java 25), com **PostgreSQL** via Docker. API REST *single-user*; a documentação das rotas está [mais abaixo](#documentação-da-api-rotas).
+
+## Como rodar o projeto (em outra máquina)
+
+### Pré-requisitos
+- **JDK 25** — o projeto tem como alvo o Java 25 (`java -version` deve mostrar 25 ou superior).
+- **Docker** + **Docker Compose** — para subir o PostgreSQL.
+- **Maven não é necessário**: o projeto já inclui o *wrapper* (`./mvnw`).
+
+### 1. Clonar o repositório
+```bash
+git clone <url-do-repositório>
+cd trainee-spotify-backend
+```
+
+### 2. Subir o banco de dados (PostgreSQL)
+O app **não** sobe o Docker sozinho (`spring.docker.compose.enabled=false`), então inicie o Postgres manualmente **antes** do backend:
+```bash
+docker compose up -d
+```
+Isso usa o `compose.yaml`: cria o banco `spotify_db` (usuário `postgresql`, senha `secret`) na porta **5432**. Os dados persistem em `./spotify_data` (ignorado pelo Git — em uma máquina nova o banco começa vazio).
+
+### 3. Rodar o backend
+```bash
+# Linux/macOS
+./mvnw spring-boot:run
+
+# Windows
+mvnw.cmd spring-boot:run
+```
+Na **primeira execução** o Hibernate cria o schema (`ddl-auto=update`) e o `DataSeeder` popula o catálogo (artistas, álbuns, músicas, playlists). Nas execuções seguintes o seeding é pulado (`>>> Banco de dados já iniciado! Pulando Seeding...`).
+
+### 4. Acessar
+- API: **http://localhost:8080**
+- Swagger UI (documentação interativa): **http://localhost:8080/swagger-ui.html**
+
+### Parar
+- Backend: `Ctrl+C`.
+- Banco: `docker compose down` (os dados continuam em `./spotify_data`; use `docker compose down -v` só se quiser descartá-los).
+
+> **Configuração**: credenciais do banco, porta e perfil ativo (`dev`) ficam em `src/main/resources/application.properties` e batem com o `compose.yaml`. Se mudar usuário/senha/porta do Postgres, ajuste os dois lugares.
+
+---
+
 # Documentação da API (Rotas)
 
 ## User (/user)
